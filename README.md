@@ -1,13 +1,6 @@
-# mpm-server
+# mpm-server_lib
 
-**Building server**
->make build
+**Make lib**
+***make build***
 
-### Runing Server
-> **syntax:** ***`server.sh  |PORT|  {Directory with public folder}`***
-
-> **example:** ***`server.sh  3001  $(pwd)`***
-
->***port must be above or equal >=3001***
-
-> **public** must be in current working  directory for resources. 
+>libs will be in lib folder

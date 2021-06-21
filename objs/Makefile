@@ -8,7 +8,7 @@ SHARED_LIB=$(SHARED_FILES:../lib/shared/%=./lib/%)
 
 SRCDIR=../src
 
-BINDIR:=../bin
+MPM_LIB_DIR:=../lib
 
 LIBNAME=mpm-server.so.0.1
 
@@ -55,10 +55,5 @@ ALLSRCS:=$(SRCFILES) $(HTTP_SRCS) $(UTILS_SRC)
 
 obj_build:all
 	@echo "::Linking object files"
-	@mkdir -p ./lib
-	@cp ../lib/shared/* ./lib/
-	$(GCC) -shared -o $(BINDIR)/$(LIBNAME) $(ALLOBJS)
-	@mkdir -p ../bin/lib
-	@cp ./lib/* ../bin/lib/
-	@rm -fr lib
+	$(GCC) -shared -o $(MPM_LIB_DIR)/$(LIBNAME) $(ALLOBJS)
 

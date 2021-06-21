@@ -67,14 +67,15 @@ function get_dependency()
 
 		cd ..
 
-		cd lib 
+		cd lib/static 
 		for index in ${!dep_name[*]}
 		do
-			for obj_file in $(ls ../.cache/${dep_name[$index]}/objs|grep -E .o)
+			for obj_file in $(ls ../../.cache/${dep_name[$index]}/objs|grep -E .o)
 			do
-				ar r ./lib.a ../.cache/${dep_name[$index]}/objs/$obj_file 
+				ar r ./lib.a ../../.cache/${dep_name[$index]}/objs/$obj_file 
 			done 
 		done
+		cd ..
 		cd ..
 }
 
@@ -83,7 +84,7 @@ if [ -d lib ]
 then
 	echo "lib...[OK]"
 else
-	echo "creating lib..."&&mkdir -p lib/shared&&echo "Done...[ok]"&&get_dependency&&get_shared_dependency
+	echo "creating lib..."&&mkdir -p lib/shared&&mkdir -p lib/static&&echo "Done...[ok]"&&get_dependency&&get_shared_dependency
 fi
 
 
@@ -102,5 +103,3 @@ else
 			mkdir temp
 			echo "temp dir is created"
 fi
-
-
