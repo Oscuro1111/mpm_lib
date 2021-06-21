@@ -1,0 +1,9 @@
+temp
+.cache
+lib
+.ccls-cache
+bin/mpm-server
+objs/*.o
+deadlines
+bin/*
+bin

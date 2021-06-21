@@ -1,0 +1,45 @@
+#Simple form data
+
+POST / HTTP/1.1
+Host: localhost:3001
+Referer: http://localhost:3001/form.html
+Origin: http://localhost:3001
+Content-Type: application/x-www-form-urlencoded
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15 Midori/6
+Accept-Encoding: gzip, deflate
+Accept-Language: en-US
+Connection: Keep-Alive
+Content-Length: 45
+Data->
+username=Ben&password=12345&date=1%2F1%2F2021
+
+
+
+#File upload request header
+#boundary start with --Key and end with --Key--
+
+POST / HTTP/1.1
+Host: localhost:3001
+Referer: http://localhost:3001/index.html
+Origin: http://localhost:3001
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryZRNBjID31HPOmvZB
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15 Midori/6
+Accept-Encoding: gzip, deflate
+Accept-Language: en-US
+Connection: Keep-Alive
+Content-Length: 226
+Data->
+------WebKitFormBoundaryZRNBjID31HPOmvZB
+Content-Disposition: form-data; name="data_file"; filename="temp.txt"
+Content-Type: text/plain
+
+this is a data 
+file useed by as demo
+
+------WebKitFormBoundaryZRNBjID31HPOmvZB--
+
+
