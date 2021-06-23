@@ -17,6 +17,10 @@ int get_req_parser(Request *const req)
         req->header.url_path = strlen(get_req->path) > 0 ? get_req->path : NULL;
         req->header.qrs = (get_req->query != NULL) ? get_req->query : NULL;
 
+        if(req->header.qrs!=NULL){
+            get_percentile_decoder(req); 
+        }
+
         return 0;
     }
     else

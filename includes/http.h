@@ -7,77 +7,77 @@
 
 typedef struct mime_types
 {
-  const char *const png;
+	const char *const png;
 
-  const char *const bin;
-  const char *const bz;
-  const char *const bmp;
+	const char *const bin;
+	const char *const bz;
+	const char *const bmp;
 
-  const char *const htm;
+	const char *const htm;
 
-  const char *const doc;
+	const char *const doc;
 
-  const char *const docx;
+	const char *const docx;
 
-  const char *const ico;
+	const char *const ico;
 
-  const char *const bz2;
+	const char *const bz2;
 
-  const char *const zip;
+	const char *const zip;
 
-  const char *const mpeg;
+	const char *const mpeg;
 
-  const char *const mjs;
+	const char *const mjs;
 
-  const char *const odt;
+	const char *const odt;
 
-  const char *const pptx;
+	const char *const pptx;
 
-  const char *const ppt;
-  const char *const oga;
+	const char *const ppt;
+	const char *const oga;
 
-  const char *const svg;
+	const char *const svg;
 
-  const char *const tar;
+	const char *const tar;
 
-  const char *const sh;
+	const char *const sh;
 
-  const char *const rar;
+	const char *const rar;
 
-  const char *const wav;
+	const char *const wav;
 
-  const char *const xhtml;
+	const char *const xhtml;
 
-  const char *const _7z;
+	const char *const _7z;
 
-  const char *const webm;
+	const char *const webm;
 
-  const char *const xls;
+	const char *const xls;
 
-  const char *const xlsx;
+	const char *const xlsx;
 
-  const char *const mp3;
+	const char *const mp3;
 
-  const char *const mp4;
+	const char *const mp4;
 
-  const char *const xml;
-  const char *const gif;
-  const char *const json;
-  const char *const js;
-  const char *const txt;
-  const char *const css;
-  const char *const jpeg;
+	const char *const xml;
+	const char *const gif;
+	const char *const json;
+	const char *const js;
+	const char *const txt;
+	const char *const css;
+	const char *const jpeg;
 
-  const char *const jpg;
+	const char *const jpg;
 
-  const char *const pdf;
+	const char *const pdf;
 
-  const char *const html;
+	const char *const html;
 
 } MPM_MIMIE_TYPES;
 
-typedef struct http_response
-{
+
+typedef struct http_response {
   int sockfd;
   char content_length[16];
   char content_type[24];
@@ -88,8 +88,7 @@ typedef struct http_response
 
 } Response;
 
-enum response_header_options
-{
+enum response_header_options {
   STATUS,
   CONTENT_LENGTH,
   CONNECTION,
@@ -98,47 +97,40 @@ enum response_header_options
   BODY
 };
 
-#define CHECK_NULL(exp) \
-  if (exp == NULL)      \
-  return NULL
+#define CHECK_NULL(exp) if (exp == NULL) return NULL
 
 //Query
 #include "./string_builder.h"
 
-typedef struct query_data
-{
+typedef struct query_data{
   String *_mem;
   char *name;
   char *value;
-} Query;
+}Query;
 
 #define MAX_QUERIES 50
 
-typedef struct query
-{
+typedef struct query{
   Query queries[MAX_QUERIES];
   uint32_t length;
-} Queries;
+}Queries;
 
 void dispose_queries(Queries *);
 
-typedef struct multipart_form_data
-{
+typedef struct multipart_form_data{
   char file_name[512];
   char file_path[1024];
   uint32_t file_size;
   //if any file recieved set to  1 and is not set  to 0.
   uint8_t is_any_file;
-} __File;
+}__File;
 
-typedef struct post_body
-{
+typedef struct post_body{
   Queries *form;
 
-} Post_Body;
+}Post_Body;
 
-typedef struct http_header
-{
+typedef struct http_header {
   char *method;
   char *content_type;
   char *boundary;
@@ -150,12 +142,12 @@ typedef struct http_header
   char *url_path;
 
   Queries *qrs;
-
+  
   __File multipart_form;
 
   Post_Body body;
 
-  char *protocol;
+  char *protocol;  
   char **cookies;
   char *accept_charset;
   char *host;
@@ -166,12 +158,11 @@ typedef struct http_header
   char *origin;
 
   uint32_t content_length;
-
+  
 } Header_t;
 
-typedef struct http_request
-{
-
+typedef struct http_request {
+  
   Header_t header;
 
   int clnt_sock;
@@ -189,19 +180,18 @@ Queries *parse_query(char *buffer, uint32_t size);
 
 //Note: POST body form-data parser only.(check get_req_parser for get request query parser)
 //url-encoded for post request body parser.
-Queries *parse_encoded_url(Request *request, char *remain, uint32_t readed_bytes);
+Queries *parse_encoded_url(Request *request, char *remain, uint32_t readed_bytes) ;
 
-// Form data -multipart form data
+  // Form data -multipart form data
 
-/*
+  /*
 
   Max number of file recived parse support
    */
 
 #define MAX_NUM_FILES_SUPPORT 10
 
-typedef struct multipart_form_file
-{
+typedef struct multipart_form_file {
   uint file_size;
   char *file_name;
   char *file_data;
@@ -209,16 +199,15 @@ typedef struct multipart_form_file
   char *content_type;
 } Multipart_Form_Data;
 
-typedef struct multipart_form
-{
+typedef struct multipart_form {
   Multipart_Form_Data forms[MAX_NUM_FILES_SUPPORT];
   unsigned int counter;
 } Multipart_Form;
 
-int get_request(Request *request, char *resource_dir, char *remain,
-                uint32_t remain_bytes, char *root);
-//send http response to client of text/html content_type
-int response_msg(int client_sock_fd, char *_msg);
+
+
+//send http response to client of text/html content_type 
+int response_msg(int client_sock_fd,char *_msg);
 
 // Recive multipart file data
 char *recive(char *root_dir, Request *request,
@@ -255,7 +244,12 @@ void set_responseHeader(Response *res, int res_option, const char *value);
 void response(Response *http_response, char *body, uint length, uint size);
 
 // Handle http client
-void HandleClient(int clntSock, char *resource_dir, char *root_dir, void (*handleRoutes)(Request *));
+void HandleClient(int clntSock, char *resource_dir, char *root_dir,void (*handleRoutes)(Request *));
+
+//Percentile parser for get request queries
+int get_percentile_decoder(Request *req);
+
+int percentile_decoder(char *str, char **res);
 
 const char *get_content_type(char *file_name);
 

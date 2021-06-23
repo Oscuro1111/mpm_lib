@@ -7,6 +7,49 @@
 #include <string.h>
 #include <sys/socket.h>
 
+
+int percentile_decoder(char *str, char **res)
+{
+  static char *decoded[21][2] = {
+      {"3A", ":"},
+      {"2F", "/"},
+      {"3F", "?"},
+      {"23", "#"},
+      {"5B", "["},
+      {"5D", "]"},
+      {"40", "@"},
+      {"21", "!"},
+      {"24", "$"},
+      {"26", "&"},
+      {"27", "'"},
+      {"28", "("},
+      {"29", ")"},
+      {"2A", "*"},
+      {"2B", "+"},
+      {"2C", ","},
+      {"3B", ";"},
+      {"3D", "="},
+      {"25", "%"},
+      {"20", "+"}};
+
+  int row, col;
+  char *temp;
+  if (str == NULL || res == NULL)
+    return -1;
+
+  for (row = 0, col = 0; row < 20; row++)
+  {
+    temp = *(*(decoded + row) + col);
+    if (temp[0] == str[0] && temp[1] == str[1])
+    {
+      *res = *(*(decoded + row) + col + 1);
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
 Queries *parse_query(char *buffer, uint32_t size) {
 
   Queries *queries = (Queries *)malloc(sizeof(Queries));
@@ -21,7 +64,7 @@ Queries *parse_query(char *buffer, uint32_t size) {
   const char *PLUS = "+";
 
   char temp[2] = {'\0', '\0'};
-
+  char *temp_ptr=NULL;
   short len = 0;
   uint32_t index = 0;
 
@@ -72,7 +115,11 @@ Queries *parse_query(char *buffer, uint32_t size) {
       if (equ[index] == '+') {
         insert_string(&string, " ");
         ++index;
-      } else {
+      } else if(equ[index]=='%'){ 
+        percentile_decoder(equ+index+1,&temp_ptr);
+        insert_string(&string,temp_ptr);
+        index=index+3;
+      }else {
         temp[0] = equ[index];
         insert_string(&string, temp);
         ++index;
