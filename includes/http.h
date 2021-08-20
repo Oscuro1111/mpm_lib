@@ -85,6 +85,7 @@ typedef struct http_response {
   char accept_ranges[16]; // default in bytes
   // OK 200 ,or error codes
   char status[8];
+  char cookies[2048];
 
 } Response;
 
@@ -94,8 +95,11 @@ enum response_header_options {
   CONNECTION,
   CONTENT_TYPE,
   ACCEPT_RANGES,
-  BODY
+  BODY,
+  COOKIES,
 };
+
+#define MAX_COOKIES 256
 
 #define CHECK_NULL(exp) if (exp == NULL) return NULL
 
@@ -148,7 +152,7 @@ typedef struct http_header {
   Post_Body body;
 
   char *protocol;  
-  char **cookies;
+  char *cookies[MAX_COOKIES];
   char *accept_charset;
   char *host;
   char *accept;

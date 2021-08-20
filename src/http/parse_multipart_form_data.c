@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <stdint.h>
 
 uint32_t parse_header_by_deli(char *header_option, char *option[256],
                               char *delimiter)
@@ -32,7 +33,7 @@ uint32_t parse_header_by_deli(char *header_option, char *option[256],
   return len;
 }
 
-int join_str(char *result_buf, uint buf_size, const char *str_start,
+int join_str(char *result_buf, uint32_t buf_size, const char *str_start,
              const char *str_end)
 {
 
@@ -85,7 +86,7 @@ void free_multipart_form(Multipart_Form *multipart)
   if (multipart->counter < MAX_NUM_FILES_SUPPORT)
   {
 
-    for (uint form = 0; form < multipart->counter; form++)
+    for (uint32_t form = 0; form < multipart->counter; form++)
     {
       if (multipart->forms[form].file_data != NULL)
       {
@@ -94,95 +95,6 @@ void free_multipart_form(Multipart_Form *multipart)
     }
   }
 }
-/*
-void parse_multipart_form_data(Request *request,
-                               Multipart_Form *multipartform)
-{
-  char boundary[128];
-  char endboundary[128];
-  const char *DELIMITER = "\r\n";
-
-  join_str(boundary, 128, "--", request->header.boundary);
-
-  join_str(endboundary, 128, boundary, "--");
-
-  char *temp = strtok(request->header.body, DELIMITER);
-  char *next;
-  char *content_type;
-
-  unsigned int offset;
-  unsigned int counter = 0;
-
-  char *buffer = (char *)malloc(request->header.content_length * sizeof(char));
-again:
-  offset = 0;
-
-  memset(buffer, 0, request->header.content_length);
-
-  if ((next = strtok(NULL, DELIMITER)) != NULL)
-  {
-    if (strcmp(boundary, temp) == 0)
-    {
-
-      content_type = strtok(NULL, DELIMITER);
-      parse_file_info_header(next, &multipartform->forms[counter]);
-
-      multipartform->forms[counter].content_type =
-          content_type + strlen("Content-Type: ");
-
-      //---key \r\n data...\r\n --endkey--
-      temp = strtok(content_type + strlen(content_type) + 1, "\n");
-
-      while ((temp = strtok(NULL, DELIMITER)) != NULL)
-      {
-        if (strlen(temp) > 0 && strcmp(endboundary, temp) != 0 &&
-            strcmp(boundary, temp) != 0)
-        {
-          offset +=
-              snprintf(buffer + offset, request->header.content_length - offset,
-                       "%s\n", temp);
-          continue;
-        }
-        else if (strcmp(boundary, temp) == 0)
-        {
-          //-----------------------------------------------------
-
-          char *temp_buf = (char *)malloc(sizeof(char) * (offset + 2));
-
-          memset(temp_buf, 0, (offset + 2) * sizeof(char));
-          memcpy(temp_buf, buffer, sizeof(char) * offset);
-
-          multipartform->forms[counter].file_data = temp_buf;
-          counter++;
-
-          multipartform->counter = counter;
-          goto again; // goto next file
-          //-----------------------------------------------------
-        }
-        else
-        {
-          char *temp_buf = (char *)malloc(sizeof(char) * (offset + 2));
-
-          memset(temp_buf, 0, (offset + 2) * sizeof(char));
-          memcpy(temp_buf, buffer, sizeof(char) * offset);
-
-          multipartform->forms[counter].file_data = temp_buf;
-
-          counter++;
-          multipartform->counter = counter;
-          // Done parsing all files
-          break;
-        }
-      } // end while
-    }
-  }
-
-  if (buffer != NULL)
-  {
-    free(buffer);
-  }
-}
-*/
 
 char readBuffer(char *buffer, const uint32_t size, uint8_t reset)
 {
@@ -211,7 +123,7 @@ int readHeader(char *buf, size_t size, char *buffer, uint32_t buffer_max_size,
   uint8_t end = 0;
   char check[4] = {'\r', '\n', '\r', '\n'};
 
-  for (uint index = 0; index < buffer_max_size; index++)
+  for (uint32_t index = 0; index < buffer_max_size; index++)
   {
 
     ch = buffer[index];
@@ -265,7 +177,7 @@ read_data:
      return -1;
   }
 
-  if (readed < 200)
+  if (readed < 100)
   {
     offset += readed;
     goto read_data;
@@ -274,7 +186,6 @@ read_data:
 
   if ((header_size = readHeader(header, 1024, buffer, 2048, &new_lines)) == 0)
   {
-    // throw errno
     return -1;
   }
 
@@ -286,8 +197,6 @@ read_data:
   memcpy(rem, (buffer + header_size), offset - header_size);
 
   // Parsing header
-
-
   parse(header, header_size, new_lines, request);
 
   //remain
@@ -469,5 +378,5 @@ store_file:
    if (unlink(path) == -1)
    {
      fprintf(stderr, "%s unable to delete this file\n", path);
-  }
+   }
 }

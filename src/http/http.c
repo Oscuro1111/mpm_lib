@@ -28,15 +28,17 @@ uint32_t parse_header_line(char *header_option, char *option[256]) {
   return len;
 }
 
+
 int parse_header(char **header_options, size_t size, Header_t *header) {
 
+  uint16_t i = 0;
   uint16_t index = 0;
   char *str;
   uint8_t len;
 
   while (((str = header_options[index++]) != NULL)) {
 
-    char *temp[64];
+    char *temp[MAX_COOKIES];
 
     len = parse_header_line(str, temp);
 
@@ -66,6 +68,14 @@ int parse_header(char **header_options, size_t size, Header_t *header) {
       header->accept_encoding = temp[1];
       continue;
     }
+
+    if(strcmp("Cookie:",temp[0])==0){
+  
+      for(;i<len-1&&i<MAX_COOKIES;i++)
+      header->cookies[i]=temp[i+1];
+
+      header->cookies[i] = NULL;
+}
 
     if (strcmp("Host:", temp[0]) == 0) {
       header->host = temp[1];
@@ -172,6 +182,9 @@ void set_responseHeader(Response *res, int res_option, const char *value) {
   case STATUS:
     strcpy(res->status, value);
     break;
+  case COOKIES:
+     strncpy(res->cookies,value,2048);
+     break;
   case CONTENT_TYPE:
     strcpy(res->content_type, value);
     break;
@@ -236,6 +249,15 @@ void response(Response *http_response, char *body, uint length, uint size) {
                        "Connection", http_response->connection);
     response[offset++] = '\r';
     response[offset++] = '\n';
+  
+  }
+
+  if(strlen(http_response->cookies)>0){
+   offset += snprintf(response + offset, RES_SIZE - offset, "%s: %s",
+                       "Set-Cookie", http_response->cookies);
+    response[offset++] = '\r';
+    response[offset++] = '\n';
+  
   }
 
   if (body != NULL) {
