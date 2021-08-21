@@ -19,6 +19,11 @@ uint32_t parse_header_by_deli(char *header_option, char *option[256],
   char *_state;
 
   char *str = strtok_r(header_option, DELIMITR, &_state);
+
+  if(str==NULL){
+    return 0;
+  }
+
   option[len] = str;
 
   len++;
@@ -155,8 +160,6 @@ headerEnd:
   return i;
 }
 
-
-//Error:keep server hang and csume all cpu core cycles need to do about it.
 int32_t recive_header(Request *request, char *rem, uint32_t size)
 {
 
@@ -173,15 +176,20 @@ int32_t recive_header(Request *request, char *rem, uint32_t size)
 read_data:
    readed = recv(request->clnt_sock, buffer + offset, 2048 - offset, 0);
 
+   /*
+      Must have readed  50bytes total before reciving zero bytes  as header is more then 50bytes longer . 
+   */
    if(readed==0){
+    fprintf(stderr,"False connection\n");
      return -1;
   }
 
-  if (readed < 100)
+  if (readed < 50)
   {
     offset += readed;
     goto read_data;
   }
+
   offset += readed;
 
   if ((header_size = readHeader(header, 1024, buffer, 2048, &new_lines)) == 0)

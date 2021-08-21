@@ -14,7 +14,7 @@
 
 #include <unistd.h>
 
-void __response_error(Response *http_response, char *body, uint length, uint size)
+void __response_error(Response *http_response, char *body, uint32_t length, uint32_t size)
 {
 
 	const uint32_t RES_SIZE = size * length + sizeof(Response) + 1024;
@@ -26,7 +26,7 @@ void __response_error(Response *http_response, char *body, uint length, uint siz
 	// Warning: NULL is not checked
 	char *response = (char *)malloc(RES_SIZE);
 
-	uint offset = 0;
+	uint32_t offset = 0;
 
 	memset(response, 0, RES_SIZE);
 
