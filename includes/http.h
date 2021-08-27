@@ -80,7 +80,7 @@ typedef struct mime_types
 typedef struct http_response {
   int sockfd;
   char content_length[16];
-  char content_type[24];
+  char content_type[256];
   char connection[16];
   char accept_ranges[16]; // default in bytes
   // OK 200 ,or error codes
@@ -209,6 +209,7 @@ typedef struct multipart_form {
 } Multipart_Form;
 
 
+uint32_t _recive_header(char buff[3072], int clnt_sock,uint16_t *new_line,uint16_t *header_size);
 
 //send http response to client of text/html content_type 
 int response_msg(int client_sock_fd,char *_msg);

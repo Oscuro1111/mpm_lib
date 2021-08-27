@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "../../includes/http.h"
+#include "../../includes/utils.h"
 
 uint32_t parse_header_line(char *header_option, char *option[256]) {
 
@@ -28,7 +29,8 @@ uint32_t parse_header_line(char *header_option, char *option[256]) {
   return len;
 }
 
-
+//NOTE:
+//ISSUE: SEGFAULT aftersevreal request
 int parse_header(char **header_options, size_t size, Header_t *header) {
 
   uint16_t i = 0;
@@ -136,10 +138,15 @@ int parse(const char *buffer, size_t size, uint32_t num_header_option,
 
   request->mem_buffer = copy_buffer;
 
+  log_str("Before parser\n");
+ //Bug: make crash after severla requests
   parse_header(header_options, options, &request->header);
-
+//
+  log_str("after header parser");
+  if(header_options)
   free(header_options);
 
+  header_options=NULL;
   return 0;
 }
 

@@ -176,15 +176,13 @@ int32_t recive_header(Request *request, char *rem, uint32_t size)
 read_data:
    readed = recv(request->clnt_sock, buffer + offset, 2048 - offset, 0);
 
-   /*
-      Must have readed  50bytes total before reciving zero bytes  as header is more then 50bytes longer . 
-   */
    if(readed==0){
-    fprintf(stderr,"False connection\n");
+
+     fprintf(stderr,"False connection\n");
      return -1;
   }
 
-  if (readed < 50)
+  if (readed<50)
   {
     offset += readed;
     goto read_data;
@@ -210,6 +208,56 @@ read_data:
   //remain
   return offset - header_size;
 }
+
+/*
+//  NOTE:
+ // BUG:Need Fix
+ 
+int32_t recive_header(Request *request, char *rem, uint32_t size)
+{
+
+  char buffer[3072]; // 3kb data
+
+  char header[1024];
+
+  uint32_t remain=0;
+  uint16_t new_lines = 0;
+  uint16_t header_size = 0;
+
+
+  remain = _recive_header(buffer,request->clnt_sock,&new_lines,&header_size);
+
+  if(remain==0){
+    return -1;
+  }
+  if(header_size==0){
+    fprintf(stderr,"unvalid request\n");
+    return -1;
+  }
+
+  //fprintf(stderr,"%*.s",header_size,buffer);
+
+  log_num(header_size);
+
+  log_str(buffer);
+
+  memcpy(rem, (buffer + header_size),remain);
+
+  memcpy(header,buffer,header_size);
+
+  log_str("parsing=>");
+
+  log_num(new_lines);
+
+  //BUG:Crash after several request at this point
+  //Parsing header
+  parse(header, header_size, new_lines+100, request);
+
+  log_str("Done-parsing\n");
+  //remain
+  return remain;
+}
+*/
 
 char *recive(char *root_dir, Request *request,
              uint32_t *file_size, char *remain, uint32_t remain_bytes)
@@ -388,3 +436,4 @@ store_file:
      fprintf(stderr, "%s unable to delete this file\n", path);
    }
 }
+

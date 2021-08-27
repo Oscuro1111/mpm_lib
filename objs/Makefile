@@ -56,4 +56,3 @@ ALLSRCS:=$(SRCFILES) $(HTTP_SRCS) $(UTILS_SRC)
 obj_build:all
 	@echo "::Linking object files"
 	$(GCC) -shared -o $(MPM_LIB_DIR)/$(LIBNAME) $(ALLOBJS)
-

@@ -192,8 +192,11 @@ void post_request(Request *request, char *remain, uint32_t bytes_remain,
 		parse_multipart_form(cache_file_path, root, request, file_size);
 
 		//response_msg(request->clnt_sock,"Done uploading");
-		free(cache_file_path);
+		if(cache_file_path)	
+			free(cache_file_path);
 
+		cache_file_path=NULL;
+		
 		return;
 	}
 
@@ -227,9 +230,10 @@ int get_request(Request *request, char *resource_dir, char *remain,
 
 	int length = 0;
 
-	Response *http_response = (Response *)malloc(sizeof(Response));
+	Response *http_response = (Response *)malloc(sizeof(Response)*10);
 
 	http_response->sockfd = request->clnt_sock;
+/*
 
 	if (strcmp("favicon.ico", request->header.path) == 0)
 	{
@@ -237,6 +241,8 @@ int get_request(Request *request, char *resource_dir, char *remain,
 		free(http_response);
 		return -1;
 	}
+
+*/
 
 	if (strlen(request->header.path) == 0 ||
 	    strcmp(request->header.path, "/") == 0)
@@ -270,34 +276,63 @@ int get_request(Request *request, char *resource_dir, char *remain,
 		fs_file.path = resource_dir;
 	}
 
-	//Note:Route need to implement
-
+  log_str("\nFile reading\n");
 	if (fs_read_file(&fs_file) == -1)
 	{
-	server_error:
+server_error:
+    log_str("Unabe to read a file\n");
 		response_error(http_response, request, "Unable to process request!", HTTP_ERROR_CODES.CODE_503);
 		free(http_response);
 		return -1;
 	}
 
+  log_str("file reading done\n");
+
 	length = fs_file.size;
+
+  log_str("Size of file=");
+  log_num(length);
 
 	int_to_str(con_length, length);
 
+  log_str("len_tr=");
+
+  log_str(con_length);
+
+  log_str("setting http_response\n");
+
 	memset(http_response, 0, sizeof(Response));
+  log_str("done cealring http_response");
 
 	http_response->sockfd = request->clnt_sock;
 
 	set_responseHeader(http_response,CONTENT_TYPE,get_content_type(fs_file.name));
+
+  log_str("Done-1");
 	set_responseHeader(http_response, STATUS, "200");
+
+  log_str("Done-2");
 	set_responseHeader(http_response, CONTENT_LENGTH, con_length);
+
+  log_str("Done-3");
 	set_responseHeader(http_response, ACCEPT_RANGES, "bytes");
-	set_responseHeader(http_response, CONNECTION, "close");
+
+  log_str("Done-4");
+  set_responseHeader(http_response, CONNECTION, "close");
+
+  log_str("done setting http_response");
 
 	response(http_response, fs_file.buffer, length, sizeof(char));
 
+  if(http_response){
+
 	free(http_response);
+	http_response=NULL;
+}
+
+  log_str("done file");
 	fs_close_file(&fs_file);
+
 
 	return 0;
 }
@@ -322,8 +357,14 @@ void free_request(Request *request)
 			}
 
 			free(request->get_req_mem);
-		}
+
+			request->get_req_mem=NULL;
+		}	
 		free(request->mem_buffer);
+		request->mem_buffer=NULL;
+
+		close(request->clnt_sock);
+
 	}
 }
 
@@ -348,7 +389,8 @@ void HandleClient(int clntSock, char *resource_dir, char *root,void (*routeHandl
 	remain_bytes = recive_header(&request, remain, 1024);
 
 	if(remain_bytes==-1){
-		goto end_client;
+		goto end_client
+;
 	}
 
 	if (strcmp(request.header.method, "GET") == 0)
@@ -379,7 +421,10 @@ route_handler:
 		}else{
 		http_response->sockfd = (&request)->clnt_sock;
 		response_error(http_response,&request, "Unable to process request!", HTTP_ERROR_CODES.CODE_404);
-		free(http_response);		
+		if(http_response){
+		free(http_response);
+		http_response=NULL;		
+		}
 	}     
 		
 }
