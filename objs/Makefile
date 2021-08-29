@@ -14,7 +14,7 @@ LIBNAME=mpm-server.so.0.1
 
 OBJSDIR=.
 
-FLAGS=-fPIC -c -O2
+FLAGS=-Wall -fPIC -c -O2
 
 #utils src build
 UTILS_SRC_DIR:=../src/utils

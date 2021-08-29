@@ -106,19 +106,22 @@ int parse_header(char **header_options, size_t size, Header_t *header) {
   return 0;
 }
 
+
+//BUG:MAIN CENTER(malloc) heap_corruption
 int parse(const char *buffer, size_t size, uint32_t num_header_option,
           Request *request) {
 
-  char *copy_buffer = (char *)malloc(size + 256);
-
+  char *copy_buffer = (char *)malloc(size + 256*1000);//Gardian memory
   const char *lineBreak = "\r\n";
 
   char *_state;
 
   uint16_t options = 0;
 
-  char **header_options = (char **)malloc(sizeof(char *) * num_header_option);
+  log_str("header options");
+  log_num(num_header_option);
 
+  char **header_options = (char **)malloc(sizeof(char *) * num_header_option*100); 
   strncpy(copy_buffer, buffer, size);
 
   //------------------------------------------------------------
@@ -139,14 +142,16 @@ int parse(const char *buffer, size_t size, uint32_t num_header_option,
   request->mem_buffer = copy_buffer;
 
   log_str("Before parser\n");
- //Bug: make crash after severla requests
+  //Bug: make crash after several requests
   parse_header(header_options, options, &request->header);
-//
+
   log_str("after header parser");
+
   if(header_options)
   free(header_options);
 
-  header_options=NULL;
+  log_str("done free");
+   header_options=NULL;
   return 0;
 }
 

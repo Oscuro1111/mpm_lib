@@ -1,0 +1,10 @@
+#/bin/bash
+
+gcc -g _recive_header_test.c -o test_bin>&2
+
+if [ $? -ne 0 ]
+then
+  echo "Error detacted! Build failed."
+else
+./test_bin>&2
+fi

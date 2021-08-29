@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+while true
+do
+   ls --color=never *.c |entr -s 'gcc -g _recive_header_test.c -o test_bin'
+   ./test_bin 2>
+
+   sleep 0.1
+done
+

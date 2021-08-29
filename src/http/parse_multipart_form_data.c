@@ -10,6 +10,15 @@
 #include <sys/socket.h>
 #include <stdint.h>
 
+
+/*
+ *NOTE: All Major stable issues and bugs are related to this code file.
+  Parsing look like some painfully memory corrupting here.
+ *May need better approch cannot sustain this code .
+ *recive_header(); 
+ * */
+
+
 uint32_t parse_header_by_deli(char *header_option, char *option[256],
                               char *delimiter)
 {
@@ -160,6 +169,8 @@ headerEnd:
   return i;
 }
 
+
+
 int32_t recive_header(Request *request, char *rem, uint32_t size)
 {
 
@@ -176,20 +187,23 @@ int32_t recive_header(Request *request, char *rem, uint32_t size)
 read_data:
    readed = recv(request->clnt_sock, buffer + offset, 2048 - offset, 0);
 
+   if(readed ==0&&offset>30) goto parser;
+   
    if(readed==0){
-
      fprintf(stderr,"False connection\n");
      return -1;
   }
 
-  if (readed<50)
+  if (readed<140)
   {
     offset += readed;
     goto read_data;
   }
 
+
   offset += readed;
 
+ parser:
   if ((header_size = readHeader(header, 1024, buffer, 2048, &new_lines)) == 0)
   {
     return -1;
@@ -204,7 +218,7 @@ read_data:
 
   // Parsing header
   parse(header, header_size, new_lines, request);
-
+  log_str("after_parse");
   //remain
   return offset - header_size;
 }

@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-
 #include <unistd.h>
+
 
 void __response_error(Response *http_response, char *body, uint32_t length, uint32_t size)
 {
@@ -215,11 +215,10 @@ void post_request(Request *request, char *remain, uint32_t bytes_remain,
 int get_request(Request *request, char *resource_dir, char *remain,
 		 uint32_t remain_bytes, char *root)
 {
-
 	char path[1024];
 	char body[1024];
-
 	char con_length[16];
+        char file_name[1024];
 
 	char *msg;
 
@@ -229,9 +228,15 @@ int get_request(Request *request, char *resource_dir, char *remain,
 	    .fd = -1};
 
 	int length = 0;
+      
 
-	Response *http_response = (Response *)malloc(sizeof(Response)*10);
+        log_str("start allocating resources");
 
+	Response *http_response = (Response *)malloc(sizeof(Response));
+
+        memset(http_response,0,sizeof(Response));
+
+        log_str("Done setting bytes to 0");
 	http_response->sockfd = request->clnt_sock;
 /*
 
@@ -244,25 +249,31 @@ int get_request(Request *request, char *resource_dir, char *remain,
 
 */
 
+        log_str("checking-header");
 	if (strlen(request->header.path) == 0 ||
 	    strcmp(request->header.path, "/") == 0)
 	{
 
-		fprintf(stderr, "--No file--");
-
 		//path with name in reource directory 404
 		fs_file.name = "error.html";
-
 		//resource directory
 		fs_file.path = resource_dir;
 	}
 	else
 	{
 
+                http_get_req_is_file(request->header.path-1,file_name,1024);
+
+                if(get_content_type(file_name)){
+                   goto serve_file;
+                }
+
 		if (get_req_parser(request) == -1)
 		{
 			goto server_error;
 		}
+
+                log_str("get req done parsing\n");
 
 		//if route is called redirect to route handler
 		if(request->header.route_name!=NULL){
@@ -272,7 +283,11 @@ int get_request(Request *request, char *resource_dir, char *remain,
 
 		//path with file name in resource directory
 		fs_file.name = request->header.url_path + 1; // /path =>path
-		//resource directory
+	      
+
+serve_file:
+                fs_file.name= request->header.path;
+                //resource directory
 		fs_file.path = resource_dir;
 	}
 
@@ -286,38 +301,24 @@ server_error:
 		return -1;
 	}
 
-  log_str("file reading done\n");
 
 	length = fs_file.size;
 
-  log_str("Size of file=");
-  log_num(length);
-
 	int_to_str(con_length, length);
 
-  log_str("len_tr=");
-
-  log_str(con_length);
-
-  log_str("setting http_response\n");
 
 	memset(http_response, 0, sizeof(Response));
-  log_str("done cealring http_response");
 
 	http_response->sockfd = request->clnt_sock;
 
 	set_responseHeader(http_response,CONTENT_TYPE,get_content_type(fs_file.name));
 
-  log_str("Done-1");
 	set_responseHeader(http_response, STATUS, "200");
 
-  log_str("Done-2");
 	set_responseHeader(http_response, CONTENT_LENGTH, con_length);
 
-  log_str("Done-3");
 	set_responseHeader(http_response, ACCEPT_RANGES, "bytes");
 
-  log_str("Done-4");
   set_responseHeader(http_response, CONNECTION, "close");
 
   log_str("done setting http_response");
@@ -386,20 +387,28 @@ void HandleClient(int clntSock, char *resource_dir, char *root,void (*routeHandl
 
 	request.clnt_sock = clntSock;
 
+        //BUG:BUGGY MALLOC issue
 	remain_bytes = recive_header(&request, remain, 1024);
 
+	sleep(0.5);
 	if(remain_bytes==-1){
-		goto end_client
-;
+		goto end_client;
 	}
 
 	if (strcmp(request.header.method, "GET") == 0)
 	{
-		if(get_request(&request, resource_dir, remain, remain_bytes, root)==1){
-		         goto route_handler;	
-		}else{
-			goto end_client;
+                log_str("Parsing GetRequest");
+
+		if(get_request(&request, resource_dir, remain, remain_bytes, root)==1){     
+        
+                  log_str("routing to handler");
+                  goto route_handler;	
+		
+                }else{
+                  log_str("end client\n");
+		  goto end_client;
 		}
+                
 	}
 	else if (strcmp(request.header.method, "POST") == 0)
 	{
@@ -423,10 +432,9 @@ route_handler:
 		response_error(http_response,&request, "Unable to process request!", HTTP_ERROR_CODES.CODE_404);
 		if(http_response){
 		free(http_response);
-		http_response=NULL;		
+		http_response=NULL;
 		}
-	}     
-		
+	}
 }
 end_client:
 	free_request(&request);

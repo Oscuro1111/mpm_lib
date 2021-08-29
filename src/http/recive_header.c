@@ -23,15 +23,16 @@ uint32_t _recive_header(char buff[3072], int clnt_sock,uint16_t *new_line,uint16
 		 check = 0;
 
 	uint32_t remain=0;
-	const uint8_t MAX_BUF = 50;
 	char buffer[64];
+	const uint8_t MAX_BUF = 50;
 
 
 	char match[] = {'\r', '\n', '\r', '\n', '\0'};
 
 
-      log_str("Getting header");
-	if (clnt_sock < 0)
+   log_str("Getting header");
+
+   if (clnt_sock < 0)
 	{
 		fprintf(stderr, "Client socket is unvalid!\n");
 		return -1;
