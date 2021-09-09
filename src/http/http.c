@@ -33,11 +33,10 @@ uint32_t parse_header_line(char *header_option, char *option[256]) {
 //ISSUE: SEGFAULT aftersevreal request
 int parse_header(char **header_options, size_t size, Header_t *header) {
 
-  uint16_t i = 0;
   uint16_t index = 0;
   char *str;
   uint8_t len;
-
+  int i=0;
   while (((str = header_options[index++]) != NULL)) {
 
     char *temp[MAX_COOKIES];
