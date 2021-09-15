@@ -23,10 +23,14 @@ void __response_error(Response *http_response, char *body, uint32_t length, uint
 
 	fprintf(stderr, "\nRES_SIZE=%d\n", RES_SIZE);
 
-	// Warning: NULL is not checked
 	char *response = (char *)malloc(RES_SIZE);
 
 	uint32_t offset = 0;
+
+	if(response==NULL){
+		fprintf(stderr,"\nMalloc:Unable toallocate memory\n");
+		return;
+	}
 
 	memset(response, 0, RES_SIZE);
 
@@ -39,7 +43,7 @@ void __response_error(Response *http_response, char *body, uint32_t length, uint
 	insert_string(&string, "Error");
 
 	offset +=
-	    snprintf(response + offset, RES_SIZE - offset, "%s", string->str);
+		snprintf(response + offset, RES_SIZE - offset, "%s", string->str);
 
 	response[offset++] = '\r';
 	response[offset++] = '\n';
@@ -49,7 +53,7 @@ void __response_error(Response *http_response, char *body, uint32_t length, uint
 	if (strlen(http_response->content_length) > 0)
 	{
 		offset += snprintf(response + offset, RES_SIZE - offset, "%s: %s",
-				   "Content-Length", http_response->content_length);
+				"Content-Length", http_response->content_length);
 		response[offset++] = '\r';
 		response[offset++] = '\n';
 	}
@@ -57,7 +61,7 @@ void __response_error(Response *http_response, char *body, uint32_t length, uint
 	if (strlen(http_response->content_type) > 0)
 	{
 		offset += snprintf(response + offset, RES_SIZE - offset, "%s: %s",
-				   "Content-Type", http_response->content_type);
+				"Content-Type", http_response->content_type);
 		response[offset++] = '\r';
 		response[offset++] = '\n';
 	}
@@ -66,7 +70,7 @@ void __response_error(Response *http_response, char *body, uint32_t length, uint
 	{
 
 		offset += snprintf(response + offset, RES_SIZE - offset, "%s: %s",
-				   "Accept-Ranges", http_response->accept_ranges);
+				"Accept-Ranges", http_response->accept_ranges);
 		response[offset++] = '\r';
 		response[offset++] = '\n';
 	}
@@ -74,7 +78,7 @@ void __response_error(Response *http_response, char *body, uint32_t length, uint
 	if (strlen(http_response->connection) > 0)
 	{
 		offset += snprintf(response + offset, RES_SIZE - offset, "%s: %s",
-				   "Connection", http_response->connection);
+				"Connection", http_response->connection);
 		response[offset++] = '\r';
 		response[offset++] = '\n';
 	}
@@ -105,7 +109,7 @@ void response_error(Response *http_response, Request *request, char *message, co
 
 	insert_string(&body, "Error=");
 
-	insert_string(&body, error_code);
+	insert_string(&body, (char *)error_code);
 
 	insert_string(&body, " request=");
 
@@ -177,8 +181,7 @@ int response_msg(int client_sock_fd, char *_msg)
 	return 0;
 }
 
-void post_request(Request *request, char *remain, uint32_t bytes_remain,
-		  char *root)
+void post_request(Request *request,char *root)
 {
 	char *cache_file_path;
 	uint32_t file_size;
@@ -187,7 +190,7 @@ void post_request(Request *request, char *remain, uint32_t bytes_remain,
 	if (strcmp("multipart/form-data", request->header.content_type) == 0)
 	{
 
-		cache_file_path = recive(root, request, &file_size, remain, bytes_remain);
+		cache_file_path = recive(root, request, &file_size);
 
 		parse_multipart_form(cache_file_path, root, request, file_size);
 
@@ -196,15 +199,15 @@ void post_request(Request *request, char *remain, uint32_t bytes_remain,
 			free(cache_file_path);
 
 		cache_file_path=NULL;
-		
+
 		return;
 	}
 
 	if (strcmp("application/x-www-form-urlencoded",
-		   request->header.content_type) == 0)
+				request->header.content_type) == 0)
 	{
 
-		qrs = parse_encoded_url(request, remain, bytes_remain);
+		qrs = parse_encoded_url(request);
 
 		request->header.body.form = qrs;
 
@@ -212,46 +215,45 @@ void post_request(Request *request, char *remain, uint32_t bytes_remain,
 	}
 }
 
-int get_request(Request *request, char *resource_dir, char *remain,
-		 uint32_t remain_bytes, char *root)
+int get_request(Request *request, char *resource_dir,char *root)
 {
 	char path[1024];
 	char body[1024];
 	char con_length[16];
-        char file_name[1024];
+	char file_name[1024];
 
 	char *msg;
 
 	FS_File fs_file = {
-	    .is_alloc = 0,
-	    .file = NULL,
-	    .fd = -1};
+		.is_alloc = 0,
+		.file = NULL,
+		.fd = -1};
 
 	int length = 0;
-      
 
-        log_str("start allocating resources");
+
+	log_str("start allocating resources");
 
 	Response *http_response = (Response *)malloc(sizeof(Response));
 
-        memset(http_response,0,sizeof(Response));
+	memset(http_response,0,sizeof(Response));
 
-        log_str("Done setting bytes to 0");
+	log_str("Done setting bytes to 0");
 	http_response->sockfd = request->clnt_sock;
-/*
+	/*
 
-	if (strcmp("favicon.ico", request->header.path) == 0)
-	{
-		response_msg(request->clnt_sock,"Not found");
-		free(http_response);
-		return -1;
-	}
+	   if (strcmp("favicon.ico", request->header.path) == 0)
+	   {
+	   response_msg(request->clnt_sock,"Not found");
+	   free(http_response);
+	   return -1;
+	   }
 
 */
 
-        log_str("checking-header");
+	log_str("checking-header");
 	if (strlen(request->header.path) == 0 ||
-	    strcmp(request->header.path, "/") == 0)
+			strcmp(request->header.path, "/") == 0)
 	{
 
 		//path with name in reource directory 404
@@ -262,18 +264,18 @@ int get_request(Request *request, char *resource_dir, char *remain,
 	else
 	{
 
-                http_get_req_is_file(request->header.path-1,file_name,1024);
+		http_get_req_is_file(request->header.path-1,file_name,1024);
 
-                if(get_content_type(file_name)){
-                   goto serve_file;
-                }
+		if(get_content_type(file_name)){
+			goto serve_file;
+		}
 
 		if (get_req_parser(request) == -1)
 		{
 			goto server_error;
 		}
 
-                log_str("get req done parsing\n");
+		log_str("get req done parsing\n");
 
 		//if route is called redirect to route handler
 		if(request->header.route_name!=NULL){
@@ -283,19 +285,18 @@ int get_request(Request *request, char *resource_dir, char *remain,
 
 		//path with file name in resource directory
 		fs_file.name = request->header.url_path + 1; // /path =>path
-	      
+
 
 serve_file:
-                fs_file.name= request->header.path;
-                //resource directory
+		fs_file.name= request->header.path;
+		//resource directory
 		fs_file.path = resource_dir;
 	}
 
-  log_str("\nFile reading\n");
 	if (fs_read_file(&fs_file) == -1)
 	{
 server_error:
-    log_str("Unabe to read a file\n");
+		log_str("Unabe to read a file\n");
 		response_error(http_response, request, "Unable to process request!", HTTP_ERROR_CODES.CODE_503);
 		free(http_response);
 		return -1;
@@ -319,19 +320,19 @@ server_error:
 
 	set_responseHeader(http_response, ACCEPT_RANGES, "bytes");
 
-  set_responseHeader(http_response, CONNECTION, "close");
+	set_responseHeader(http_response, CONNECTION, "close");
 
-  log_str("done setting http_response");
+	log_str("done setting http_response");
 
 	response(http_response, fs_file.buffer, length, sizeof(char));
 
-  if(http_response){
+	if(http_response){
 
-	free(http_response);
-	http_response=NULL;
-}
+		free(http_response);
+		http_response=NULL;
+	}
 
-  log_str("done file");
+	log_str("done file");
 	fs_close_file(&fs_file);
 
 
@@ -372,47 +373,51 @@ void free_request(Request *request)
 void HandleClient(int clntSock, char *resource_dir, char *root,void (*routeHandler)(Request *))
 {
 
-	char remain[1024];
-	int32_t remain_bytes;
-        Response *http_response=NULL;
+
+	int32_t error;
+	Response *http_response=NULL;
 
 	//Must initalize with NULL for confirmation is they will be allocated or not and to escape garbage value
 	Request request = {
-	    .get_req_mem = NULL,
-	    .header.qrs = NULL,
-	    .mem_buffer = NULL,
-	    .header.body.form = NULL,
-	    .header.multipart_form.is_any_file = -1,
+		.get_req_mem = NULL,
+		.header.qrs = NULL,
+		.mem_buffer = NULL,
+		.header.body.form = NULL,
+		.header.multipart_form.is_any_file = -1,
 	};
 
 	request.clnt_sock = clntSock;
 
-        //BUG:BUGGY MALLOC issue
-	remain_bytes = recive_header(&request, remain, 1024);
+     FILE *fp  =fdopen(request.clnt_sock,"rb+");
 
-	sleep(0.5);
-	if(remain_bytes==-1){
+     error = recive_header(&request,fp);
+
+
+	if(error==-1){
 		goto end_client;
 	}
 
+  //set stream
+  request.stream=fp;
+
 	if (strcmp(request.header.method, "GET") == 0)
 	{
-                log_str("Parsing GetRequest");
+		log_str("Parsing GetRequest");
 
-		if(get_request(&request, resource_dir, remain, remain_bytes, root)==1){     
-        
-                  log_str("routing to handler");
-                  goto route_handler;	
-		
-                }else{
-                  log_str("end client\n");
-		  goto end_client;
+		if(get_request(&request, resource_dir,root)==1){     
+
+			log_str("routing to handler");
+			goto route_handler;	
+
+		}else{
+			log_str("end client\n");
+			goto end_client;
 		}
-                
+
 	}
 	else if (strcmp(request.header.method, "POST") == 0)
 	{
-		post_request(&request, remain, remain_bytes, root);
+		post_request(&request, root);
 	}
 	else
 	{
@@ -424,18 +429,19 @@ route_handler:
 		routeHandler(&request);
 	}else{
 
-	        http_response = (Response *)malloc(sizeof(Response));
+		http_response = (Response *)malloc(sizeof(Response));
 		if(http_response==NULL){
 			fprintf(stderr,"Unable to allocate memory for respone struct.");
 		}else{
-		http_response->sockfd = (&request)->clnt_sock;
-		response_error(http_response,&request, "Unable to process request!", HTTP_ERROR_CODES.CODE_404);
-		if(http_response){
-		free(http_response);
-		http_response=NULL;
+			http_response->sockfd = (&request)->clnt_sock;
+			response_error(http_response,&request, "Unable to process request!", HTTP_ERROR_CODES.CODE_404);
+			if(http_response){
+				free(http_response);
+				http_response=NULL;
+			}
 		}
 	}
-}
 end_client:
 	free_request(&request);
+	fclose(fp);
 }

@@ -9,75 +9,50 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /*
   3kb buffer for header reciver
 */
-uint32_t _recive_header(char buff[3072], int clnt_sock,uint16_t *new_line,uint16_t *header_size)
+
+int32_t recive_header_data(char buff[3072], uint16_t *new_line, uint16_t *header_size, FILE *fp)
 {
+	uint16_t total_recived = 0,
+			 check = 0;
 
-	uint16_t recived = 0,
-		 index,
-		 current = 0,
-		 total_recived = 0,
-		 check = 0;
+	char ch;
 
-	uint32_t remain=0;
-	char buffer[64];
-	const uint8_t MAX_BUF = 50;
-
-
-	char match[] = {'\r', '\n', '\r', '\n', '\0'};
-
-
-   log_str("Getting header");
-
-   if (clnt_sock < 0)
+	if (fp == NULL)
 	{
-		fprintf(stderr, "Client socket is unvalid!\n");
+		log_str("Unable to open clnt_sock,fdopen() return NULL!");
 		return -1;
 	}
 
-	while ((recived = recv(clnt_sock, buffer, MAX_BUF, 0)))
+	log_str("Getting header");
+	
+	for (; total_recived < 3072;)
 	{
-		total_recived += recived;
-
-		for (index = 0; index < recived; index++)
+		ch = getc(fp);
+		if (ch == '\r' || ch == '\n' || ch == '\r' || ch == '\n')
 		{
-			if (buffer[index] == match[check])
-			{
-				if (buffer[index] == '\n')
-				{
-
-					*new_line=*new_line+1;
-				}
-				check++;
-				buff[current + index] = buffer[index];
-			}
-			else
-			{
-				if(buffer[index]=='\n'){
-					*new_line=*new_line+1;
-				}
-
-				check=0;
-				buff[current + index] = buffer[index];
-			}
-			if (check == 4)
-			{
-				*header_size = current + index;
-				 remain = total_recived - *header_size;
-				log_str("Done header");
-				return remain;
-			}
+			check++;
+			*new_line=*new_line+1;	
+		}
+		else
+		{
+			check = 0;
 		}
 
-		current += index;
+		buff[total_recived] = ch;
+		total_recived++;
+
+		if (check == 4)
+		{
+			*header_size = total_recived;
+			return 0;
+		}
 	}
 
-	*header_size=0;
-	*new_line = 0;
-
-	log_str("Ending header receiving work");
-	return 0;
+	log_str("unexpected error :header size exceeded 3kb limit!");
+	return -1;
 }

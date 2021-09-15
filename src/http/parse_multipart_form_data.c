@@ -169,8 +169,7 @@ headerEnd:
   return i;
 }
 
-
-
+/*
 int32_t recive_header(Request *request, char *rem, uint32_t size)
 {
 
@@ -223,58 +222,44 @@ read_data:
   return offset - header_size;
 }
 
-/*
+
+
+*/
 //  NOTE:
  // BUG:Need Fix
  
-int32_t recive_header(Request *request, char *rem, uint32_t size)
+int32_t recive_header(Request *request, FILE *fp)
 {
 
   char buffer[3072]; // 3kb data
 
-  char header[1024];
-
-  uint32_t remain=0;
+  int32_t error=0;
   uint16_t new_lines = 0;
   uint16_t header_size = 0;
+ 
+  error = recive_header_data(buffer,&new_lines,&header_size,fp);
 
-
-  remain = _recive_header(buffer,request->clnt_sock,&new_lines,&header_size);
-
-  if(remain==0){
+  if(error==-1){
     return -1;
   }
+
   if(header_size==0){
     fprintf(stderr,"unvalid request\n");
     return -1;
   }
 
-  //fprintf(stderr,"%*.s",header_size,buffer);
+//fprintf(stderr,"%*.s",header_size,buffer);
 
-  log_num(header_size);
-
-  log_str(buffer);
-
-  memcpy(rem, (buffer + header_size),remain);
-
-  memcpy(header,buffer,header_size);
-
-  log_str("parsing=>");
-
-  log_num(new_lines);
 
   //BUG:Crash after several request at this point
   //Parsing header
-  parse(header, header_size, new_lines+100, request);
-
-  log_str("Done-parsing\n");
-  //remain
-  return remain;
+parse(buffer,header_size,new_lines,request);
+ 
+  return 0;
 }
-*/
 
 char *recive(char *root_dir, Request *request,
-             uint32_t *file_size, char *remain, uint32_t remain_bytes)
+             uint32_t *file_size)
 {
   char *ret_path;
 
@@ -286,20 +271,17 @@ char *recive(char *root_dir, Request *request,
   char path_to_cache[1024];
 
   char buf[2048];
-  uint32_t i = 0;
+  uint32_t offset = 0;
   uint32_t bytes_readed = 0;
-  uint32_t total_bytes_to_read =
-      request->header.content_length - remain_bytes;
+  int32_t total_bytes_to_read =request->header.content_length;
 
   int_to_str(cachefile_name, ++num);
-
   join_str(location, 1024, "temp/cache", cachefile_name);
-
   join_str(path_to_cache, 1024, location, ".txt");
-
   join_path(path, 1024, root_dir, path_to_cache);
 
-  FILE *cache_file = fopen(path, "a");
+
+  FILE *cache_file = fopen(path, "ab+");
 
   if (cache_file == NULL)
   {
@@ -307,17 +289,21 @@ char *recive(char *root_dir, Request *request,
     return NULL;
   }
 
-  fwrite(remain, sizeof(char), remain_bytes, cache_file);
+  while (offset < total_bytes_to_read)
+  {//NOTE:Blocking IO
+   //NEEDED NON-BLOCKING IO READ
+    if((request->header.content_length-offset)<1024){
+        bytes_readed = fread(buf,sizeof(char),(request->header.content_length-offset),request->stream);    
+  }else{
+    bytes_readed = fread(buf,sizeof(char),1024,request->stream);    
+  }
 
-  while (i <= total_bytes_to_read)
-  {
-
-    bytes_readed = recv(request->clnt_sock, buf, 1536, 0);
-    i += bytes_readed;
+    if(bytes_readed==0) break;
+    offset += bytes_readed;
     fwrite(buf, sizeof(char), bytes_readed, cache_file);
   }
 
-  *file_size = i;
+  *file_size = offset;
 
   fclose(cache_file);
 

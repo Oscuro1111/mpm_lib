@@ -170,6 +170,7 @@ typedef struct http_request {
   Header_t header;
 
   int clnt_sock;
+  FILE *stream;
   char *mem_buffer; // buffer used to save header data
   //Type Get_Req
   void *get_req_mem; //memory for parsed Get_request and queries must not altered.
@@ -184,7 +185,7 @@ Queries *parse_query(char *buffer, uint32_t size);
 
 //Note: POST body form-data parser only.(check get_req_parser for get request query parser)
 //url-encoded for post request body parser.
-Queries *parse_encoded_url(Request *request, char *remain, uint32_t readed_bytes) ;
+Queries *parse_encoded_url(Request *request) ;
 
   // Form data -multipart form data
 
@@ -208,6 +209,14 @@ typedef struct multipart_form {
   unsigned int counter;
 } Multipart_Form;
 
+//Handle post request and parse
+void post_request(Request *request,char *root);	
+
+int get_request(Request *request, char *resource_dir,char *root);
+//ReciveHeader data from clnt  into 3kb buff 
+int32_t recive_header_data(char buff[3072],uint16_t *new_line,uint16_t *header_size,FILE *fp);
+ 
+int32_t recive_header(Request *request, FILE *fp);
 
 uint32_t _recive_header(char buff[3072], int clnt_sock,uint16_t *new_line,uint16_t *header_size);
 
@@ -216,10 +225,9 @@ int response_msg(int client_sock_fd,char *_msg);
 
 // Recive multipart file data
 char *recive(char *root_dir, Request *request,
-             uint32_t *file_size, char *remain, uint32_t remain_bytes);
-
-int32_t recive_header(Request *request, char *rem,
-                       uint32_t size);
+             uint32_t *file_size);
+//int32_t recive_header(Request *request, char *rem,
+  //                     uint32_t size);
 
 // Read buffer and return EOF once readed all bytes.
 char readBuffer(char *buffer, const uint32_t size, uint8_t reset);

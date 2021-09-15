@@ -14,6 +14,9 @@ void log_str(char *str) { fprintf(stderr, "\n%s\n", str); }
 
 void log_num(long int num) { fprintf(stderr, "\n%ld\n", num); }
 
+
+
+
 void __recive_header_test() {
 
   /*
@@ -56,20 +59,6 @@ void __recive_header_test() {
   //parse(header,request);
   return;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 int main() {
   printf("runing test\n");

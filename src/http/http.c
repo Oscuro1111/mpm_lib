@@ -8,6 +8,9 @@
 #include "../../includes/http.h"
 #include "../../includes/utils.h"
 
+
+typedef unsigned int uint;
+
 uint32_t parse_header_line(char *header_option, char *option[256]) {
 
   const char *DELIMITR = " ";
@@ -117,7 +120,6 @@ int parse(const char *buffer, size_t size, uint32_t num_header_option,
 
   uint16_t options = 0;
 
-  log_str("header options");
   log_num(num_header_option);
 
   char **header_options = (char **)malloc(sizeof(char *) * num_header_option*100); 
@@ -140,16 +142,12 @@ int parse(const char *buffer, size_t size, uint32_t num_header_option,
 
   request->mem_buffer = copy_buffer;
 
-  log_str("Before parser\n");
-  //Bug: make crash after several requests
   parse_header(header_options, options, &request->header);
 
-  log_str("after header parser");
 
   if(header_options)
   free(header_options);
 
-  log_str("done free");
    header_options=NULL;
   return 0;
 }

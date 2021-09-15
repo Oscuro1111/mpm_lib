@@ -7,9 +7,9 @@
 #include <string.h>
 #include <sys/socket.h>
 
-
 int percentile_decoder(char *str, char **res)
 {
+
   static char *decoded[21][2] = {
       {"3A", ":"},
       {"2F", "/"},
@@ -39,6 +39,9 @@ int percentile_decoder(char *str, char **res)
 
   for (row = 0, col = 0; row < 20; row++)
   {
+    /*
+       *(**decoded)->*(*decoded)->{*,*}
+    */
     temp = *(*(decoded + row) + col);
     if (temp[0] == str[0] && temp[1] == str[1])
     {
@@ -46,7 +49,6 @@ int percentile_decoder(char *str, char **res)
       return 0;
     }
   }
-
   return 0;
 }
 
@@ -57,7 +59,7 @@ Queries *parse_query(char *buffer, uint32_t size) {
   char *__save_ptr;
   char *__save_ptr1;
 
-  char *qry_str[MAX_QUERIES];
+ char *qry_str[MAX_QUERIES];
 
   const char *AND = "&";
   const char *EQUAL = "=";
@@ -96,12 +98,12 @@ Queries *parse_query(char *buffer, uint32_t size) {
     uint32_t val_pos;
 
     index = 0;
+    fprintf(stderr,"%s\n",equ);
 
     equ = strtok_r(qry_str[len], EQUAL, &__save_ptr1);
 
     CHECK_NULL(equ);
 
-    fprintf(stderr,"%s\n",equ);
 
     insert_string(&string, equ);
 
@@ -112,6 +114,7 @@ Queries *parse_query(char *buffer, uint32_t size) {
     val_pos = string->current;
     
     while (equ[index] != '\0') {
+    fprintf(stderr,"%s\n",equ);
       if (equ[index] == '+') {
         insert_string(&string, " ");
         ++index;
@@ -137,12 +140,11 @@ Queries *parse_query(char *buffer, uint32_t size) {
 }
 
 
-Queries *parse_encoded_url(Request *request, char *remain,
-                           uint32_t readed_bytes) {
+Queries *parse_encoded_url(Request *request) {
   char *buffer = (char *)malloc(request->header.content_length + 256);
 
   uint32_t readed = 0;
-
+  uint32_t offset=0;
   if (buffer == NULL) {
     fprintf(stderr, "Unable to allocate memory for buffer\n");
     return NULL;
@@ -150,21 +152,14 @@ Queries *parse_encoded_url(Request *request, char *remain,
 
   memset(buffer, 0, request->header.content_length+256);
 
-  memcpy(buffer, remain, readed_bytes);
-  
-  readed += readed_bytes;
-
-  while (readed < request->header.content_length) {
-    readed += recv(request->clnt_sock, buffer + readed,
-                   request->header.content_length + 256 - readed, 0);
-     }
-
-  //Parsing queries 
-  Queries *qrs = parse_query(buffer, readed);
- 
+  while (offset!=request->header.content_length) {
+    readed=fread(buffer+offset,sizeof(char),1,request->stream);
+    offset+=readed;
+  }
+  //Parsing queries
+  Queries *qrs = parse_query(buffer, offset);
   free(buffer);
- 
- 
+
   return qrs;
 }
 
